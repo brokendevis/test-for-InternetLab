@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-paper';
 import { MATCHES_URL } from '../config';
 import type { MatchesData } from '../matches';
 import { MatchCard } from '../components/MatchCard';
@@ -12,6 +12,7 @@ export function MatchesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,6 +43,8 @@ export function MatchesScreen() {
     return () => controller.abort();
   }, [attempt]);
 
+  const matches = (data?.matches ?? []).filter((match) => filter === 'all' || match.status === filter);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -52,6 +55,16 @@ export function MatchesScreen() {
         <Text variant="bodyMedium" style={styles.muted}>
           {data ? `Тур ${data.round}` : 'Расписание и результаты'}
         </Text>
+        <SegmentedButtons
+          value={filter}
+          onValueChange={setFilter}
+          style={styles.filters}
+          buttons={[
+            { value: 'all', label: 'Все', style: { flex: 0.5 } },
+            { value: 'scheduled', label: 'Предстоящие' },
+            { value: 'finished', label: 'Завершённые' },
+          ]}
+        />
       </View>
 
       {loading ? (
@@ -69,14 +82,18 @@ export function MatchesScreen() {
         </View>
       ) : (
         <FlatList
-          data={data?.matches ?? []}
+          data={matches}
           keyExtractor={(match) => match.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.state}>
-              <Text variant="titleMedium">Матчей пока нет</Text>
+              <Text variant="titleMedium">
+                {filter === 'all' ? 'Матчей пока нет' : 'Нет матчей в этой категории'}
+              </Text>
               <Text variant="bodyMedium" style={styles.stateText}>
-                Здесь появятся расписание и результаты тура.
+                {filter === 'all'
+                  ? 'Здесь появятся расписание и результаты тура.'
+                  : 'Выберите другой фильтр, чтобы посмотреть матчи.'}
               </Text>
             </View>
           }
@@ -99,6 +116,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: '#2458c6', letterSpacing: 2 },
   title: { fontWeight: '700' },
   muted: { color: '#596579' },
+  filters: { marginTop: 12 },
   list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
   stateText: { textAlign: 'center', color: '#596579' },
