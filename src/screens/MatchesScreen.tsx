@@ -4,6 +4,7 @@ import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-
 import { MATCHES_URL } from '../config';
 import type { MatchesData } from '../matches';
 import { MatchCard } from '../components/MatchCard';
+import { UpdatedAgo } from '../components/UpdatedAgo';
 import { useFavorites } from '../hooks/useFavorites';
 
 export function MatchesScreen() {
@@ -13,15 +14,20 @@ export function MatchesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState('all');
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+
+  function reload() {
+    setLoading(true);
+    setAttempt((value) => value + 1);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadMatches() {
-      setLoading(true);
       setError(null);
       try {
-        const response = await fetch(MATCHES_URL, { signal: controller.signal });
+        const response = await fetch(MATCHES_URL, { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`Не удалось загрузить матчи (HTTP ${response.status}).`);
         }
@@ -29,7 +35,10 @@ export function MatchesScreen() {
         if (!result || typeof result.round !== 'number' || !Array.isArray(result.matches)) {
           throw new Error('Сервер вернул некорректные данные матчей.');
         }
-        if (!controller.signal.aborted) setData(result);
+        if (!controller.signal.aborted) {
+          setData(result);
+          setUpdatedAt(new Date());
+        }
       } catch (cause) {
         if (!controller.signal.aborted) {
           setError(cause instanceof Error ? cause.message : 'Проверьте подключение к интернету.');
@@ -55,6 +64,17 @@ export function MatchesScreen() {
         <Text variant="bodyMedium" style={styles.muted}>
           {data ? `Тур ${data.round}` : 'Расписание и результаты'}
         </Text>
+        <View style={styles.refresh}>
+          <Button mode="outlined" onPress={reload} loading={loading} disabled={loading}>
+            Обновить
+          </Button>
+          {updatedAt && <UpdatedAgo since={updatedAt} />}
+        </View>
+        {error && data && (
+          <Text variant="bodyMedium" style={styles.error} accessibilityLiveRegion="polite">
+            Не удалось обновить. {error}
+          </Text>
+        )}
         <SegmentedButtons
           value={filter}
           onValueChange={setFilter}
@@ -67,16 +87,16 @@ export function MatchesScreen() {
         />
       </View>
 
-      {loading ? (
+      {loading && !data ? (
         <View style={styles.state} accessibilityLiveRegion="polite">
           <ActivityIndicator accessibilityLabel="Загрузка матчей" />
           <Text variant="bodyLarge" style={styles.muted}>Загружаем матчи…</Text>
         </View>
-      ) : error ? (
+      ) : error && !data ? (
         <View style={styles.state} accessibilityLiveRegion="polite">
           <Text variant="titleMedium">Не удалось загрузить матчи</Text>
           <Text variant="bodyMedium" style={styles.stateText}>{error}</Text>
-          <Button mode="contained" onPress={() => setAttempt((value) => value + 1)}>
+          <Button mode="contained" onPress={reload}>
             Повторить
           </Button>
         </View>
@@ -116,6 +136,8 @@ const styles = StyleSheet.create({
   eyebrow: { color: '#2458c6', letterSpacing: 2 },
   title: { fontWeight: '700' },
   muted: { color: '#596579' },
+  refresh: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 },
+  error: { color: '#b42332' },
   filters: { marginTop: 12 },
   list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
