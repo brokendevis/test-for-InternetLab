@@ -1,25 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Text } from 'react-native-paper';
 import { MATCHES_URL } from '../config';
 import type { MatchesData } from '../matches';
-import { FavoriteButton } from '../components/FavoriteButton';
+import { MatchCard } from '../components/MatchCard';
 import { useFavorites } from '../hooks/useFavorites';
-
-const statuses = new Map([
-  ['scheduled', 'Предстоит'],
-  ['finished', 'Завершён'],
-  ['live', 'В прямом эфире'],
-  ['postponed', 'Перенесён'],
-]);
-
-const dateFormat = new Intl.DateTimeFormat('ru-RU', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 export function MatchesScreen() {
   const { isFavorite, toggle } = useFavorites();
@@ -96,33 +81,11 @@ export function MatchesScreen() {
             </View>
           }
           renderItem={({ item: match }) => (
-            <Card mode="outlined" style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.meta}>
-                    <Text variant="labelMedium" style={[
-                      styles.status,
-                      match.status === 'live' && styles.live,
-                    ]}>
-                      {statuses.get(match.status) ?? 'Статус неизвестен'}
-                      {match.status === 'live' && match.minute !== undefined ? ` · ${match.minute}′` : ''}
-                    </Text>
-                    <Text variant="bodySmall" style={styles.muted}>
-                      {match.startsAt ? dateFormat.format(new Date(match.startsAt)) : 'Дата уточняется'}
-                    </Text>
-                  </View>
-                  <FavoriteButton active={isFavorite(match.id)} onPress={() => toggle(match.id)} />
-                </View>
-                <View style={styles.team}>
-                  <Text variant="titleMedium" style={styles.teamName}>{match.home.name}</Text>
-                  <Text variant="titleLarge" style={styles.score}>{match.score?.home ?? '—'}</Text>
-                </View>
-                <View style={styles.team}>
-                  <Text variant="titleMedium" style={styles.teamName}>{match.away.name}</Text>
-                  <Text variant="titleLarge" style={styles.score}>{match.score?.away ?? '—'}</Text>
-                </View>
-              </Card.Content>
-            </Card>
+            <MatchCard
+              match={match}
+              isFavorite={isFavorite(match.id)}
+              onToggleFavorite={() => toggle(match.id)}
+            />
           )}
         />
       )}
@@ -137,15 +100,6 @@ const styles = StyleSheet.create({
   title: { fontWeight: '700' },
   muted: { color: '#596579' },
   list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 16 },
-  cardContent: { gap: 8 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  meta: { flex: 1, gap: 4, paddingBottom: 8 },
-  status: { color: '#596579' },
-  live: { color: '#b42332' },
-  team: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  teamName: { flex: 1, flexShrink: 1 },
-  score: { minWidth: 28, textAlign: 'center', fontWeight: '700', fontVariant: ['tabular-nums'] },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
   stateText: { textAlign: 'center', color: '#596579' },
 });
