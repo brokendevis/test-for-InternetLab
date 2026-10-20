@@ -3,6 +3,8 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
 import { MATCHES_URL } from '../config';
 import type { MatchesData } from '../matches';
+import { FavoriteButton } from '../components/FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 const statuses = new Map([
   ['scheduled', 'Предстоит'],
@@ -20,6 +22,7 @@ const dateFormat = new Intl.DateTimeFormat('ru-RU', {
 });
 
 export function MatchesScreen() {
+  const { isFavorite, toggle } = useFavorites();
   const [data, setData] = useState<MatchesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,17 +98,20 @@ export function MatchesScreen() {
           renderItem={({ item: match }) => (
             <Card mode="outlined" style={styles.card}>
               <Card.Content style={styles.cardContent}>
-                <View style={styles.meta}>
-                  <Text variant="labelMedium" style={[
-                    styles.status,
-                    match.status === 'live' && styles.live,
-                  ]}>
-                    {statuses.get(match.status) ?? 'Статус неизвестен'}
-                    {match.status === 'live' && match.minute !== undefined ? ` · ${match.minute}′` : ''}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.muted}>
-                    {match.startsAt ? dateFormat.format(new Date(match.startsAt)) : 'Дата уточняется'}
-                  </Text>
+                <View style={styles.cardHeader}>
+                  <View style={styles.meta}>
+                    <Text variant="labelMedium" style={[
+                      styles.status,
+                      match.status === 'live' && styles.live,
+                    ]}>
+                      {statuses.get(match.status) ?? 'Статус неизвестен'}
+                      {match.status === 'live' && match.minute !== undefined ? ` · ${match.minute}′` : ''}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.muted}>
+                      {match.startsAt ? dateFormat.format(new Date(match.startsAt)) : 'Дата уточняется'}
+                    </Text>
+                  </View>
+                  <FavoriteButton active={isFavorite(match.id)} onPress={() => toggle(match.id)} />
                 </View>
                 <View style={styles.team}>
                   <Text variant="titleMedium" style={styles.teamName}>{match.home.name}</Text>
@@ -133,7 +139,8 @@ const styles = StyleSheet.create({
   list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
   card: { backgroundColor: '#fff', borderRadius: 16 },
   cardContent: { gap: 8 },
-  meta: { gap: 4, paddingBottom: 8 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  meta: { flex: 1, gap: 4, paddingBottom: 8 },
   status: { color: '#596579' },
   live: { color: '#b42332' },
   team: { flexDirection: 'row', alignItems: 'center', gap: 12 },
