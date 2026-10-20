@@ -39,9 +39,9 @@ export function MatchesScreen() {
           onValueChange={setFilter}
           style={styles.filters}
           buttons={[
-            { value: 'all', label: 'Все', style: { flex: 0.5 } },
-            { value: 'scheduled', label: 'Предстоящие' },
-            { value: 'finished', label: 'Завершённые' },
+            { value: 'all', label: 'Все', style: { flex: 0.5, minWidth: 48 }, labelStyle: styles.filterLabel },
+            { value: 'scheduled', label: 'Предстоящие', labelStyle: styles.filterLabel },
+            { value: 'finished', label: 'Завершённые', labelStyle: styles.filterLabel },
           ]}
         />
       </View>
@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
   refresh: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 },
   error: { color: '#b42332' },
   filters: { marginTop: 12 },
+  filterLabel: { fontSize: 12 },
   list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
   stateText: { textAlign: 'center', color: '#596579' },

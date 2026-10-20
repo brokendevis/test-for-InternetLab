@@ -17,7 +17,11 @@ export function UpdatedAgo({ since }: Props) {
     return () => clearInterval(interval);
   }, [since]);
 
-  return <Text style={styles.text}>Обновлено {seconds} сек назад</Text>;
+  return (
+    <Text style={styles.text}>
+      Обновлено {seconds < 60 ? `${seconds} сек` : `${Math.floor(seconds / 60)} мин ${seconds % 60} сек`} назад
+    </Text>
+  );
 }
 
 const styles = StyleSheet.create({
